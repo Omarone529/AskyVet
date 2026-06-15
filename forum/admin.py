@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ForumCategory, Thread, Post, PinnedPost
+from .models import ForumCategory, Thread, Post, PinnedPost, Reply
 
 
 @admin.register(ForumCategory)
@@ -31,6 +31,13 @@ class PostAdmin(admin.ModelAdmin):
     list_display = ("thread", "author", "created_at", "updated_at")
     list_filter = ("created_at",)
     search_fields = ("content", "author__username", "thread__title")
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(Reply)
+class ReplyAdmin(admin.ModelAdmin):
+    list_display = ("post", "author", "created_at")
+    search_fields = ("content", "author__username")
     readonly_fields = ("created_at", "updated_at")
 
 
