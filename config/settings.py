@@ -53,9 +53,9 @@ INSTALLED_APPS = [
     "dj_rest_auth",
     "dj_rest_auth.registration",
     # Local apps
-    "users",
-    "articles",
-    "forum",
+    "users.apps.UsersConfig",
+    "articles.apps.ArticlesConfig",
+    "forum.apps.ForumConfig",
 ]
 
 MIDDLEWARE = [
@@ -180,9 +180,8 @@ REST_AUTH = {
 
 
 # Allauth — email-based authentication, no email verification in development
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
 # Google OAuth scopes
