@@ -74,6 +74,25 @@ class Post(models.Model):
         return f"Post by {self.author.username} on {self.thread.title}"
 
 
+class Reply(models.Model):
+    """A reply to a post inside a thread. One level deep only."""
+
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="replies")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="replies")
+    content = models.TextField()
+    likes = models.ManyToManyField(User, related_name="liked_replies", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Risposta"
+        verbose_name_plural = "Risposte"
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"Reply by {self.author.username} on post {self.post.id}"
+
+
 class PinnedPost(models.Model):
     """Represents a post pinned by the thread author inside a thread."""
 

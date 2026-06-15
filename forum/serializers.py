@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from users.serializers import UserSerializer
-from .models import ForumCategory, Thread, Post
+from .models import ForumCategory, Thread, Post, Reply
 
 
 class ForumCategorySerializer(serializers.ModelSerializer):
@@ -12,12 +12,49 @@ class ForumCategorySerializer(serializers.ModelSerializer):
         fields = ("id", "name", "slug", "description", "order")
 
 
-class PostSerializer(serializers.ModelSerializer):
-    """Serializer for posts/replies."""
+class ReplySerializer(serializers.ModelSerializer):
+    """Serializer for replies to posts."""
 
     author = UserSerializer(read_only=True)
     likes_count = serializers.IntegerField(source="likes.count", read_only=True)
     is_liked = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Reply
+        fields = (
+            "id",
+            "author",
+            "content",
+            "likes_count",
+            "is_liked",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "author", "created_at", "updated_at")
+
+    def get_is_liked(self, obj):
+        """Return whether the requesting user has liked this reply."""
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
+
+
+class ReplyWriteSerializer(serializers.ModelSerializer):
+    """Serializer for creating replies."""
+
+    class Meta:
+        model = Reply
+        fields = ("content",)
+
+
+class PostSerializer(serializers.ModelSerializer):
+    """Serializer for posts with nested replies."""
+
+    author = UserSerializer(read_only=True)
+    likes_count = serializers.IntegerField(source="likes.count", read_only=True)
+    is_liked = serializers.SerializerMethodField()
+    replies = ReplySerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
@@ -28,12 +65,14 @@ class PostSerializer(serializers.ModelSerializer):
             "content",
             "likes_count",
             "is_liked",
+            "replies",
             "created_at",
             "updated_at",
         )
         read_only_fields = ("id", "thread", "author", "created_at", "updated_at")
 
     def get_is_liked(self, obj):
+        """Return whether the requesting user has liked this post."""
         request = self.context.get("request")
         if request and request.user.is_authenticated:
             return obj.likes.filter(id=request.user.id).exists()
@@ -41,7 +80,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class PostWriteSerializer(serializers.ModelSerializer):
-    """Serializer for creating/updating posts."""
+    """Serializer for creating and updating posts."""
 
     class Meta:
         model = Post
@@ -74,6 +113,7 @@ class ThreadListSerializer(serializers.ModelSerializer):
         )
 
     def get_last_post(self, obj):
+        """Return author and timestamp of the last post in the thread."""
         last_post = obj.posts.last()
         if last_post:
             return {
@@ -84,7 +124,7 @@ class ThreadListSerializer(serializers.ModelSerializer):
 
 
 class ThreadDetailSerializer(serializers.ModelSerializer):
-    """Full serializer for thread detail view includes posts and pinned posts."""
+    """Full serializer for thread detail view, includes posts and pinned posts."""
 
     author = UserSerializer(read_only=True)
     category = ForumCategorySerializer(read_only=True)
@@ -143,6 +183,7 @@ class ThreadWriteSerializer(serializers.ModelSerializer):
         fields = ("title", "content", "category_id")
 
     def create(self, validated_data):
+        """Create thread and its first post atomically."""
         content = validated_data.pop("content")
         thread = Thread.objects.create(
             author=self.context["request"].user, **validated_data
