@@ -1,0 +1,41 @@
+from django.urls import path
+
+from .views import (
+    ForumCategoryListView,
+    ThreadListView,
+    ThreadCreateView,
+    ThreadDetailView,
+    ThreadUpdateView,
+    ThreadDeleteView,
+    ThreadPinView,
+    ThreadCloseView,
+    PostCreateView,
+    PostUpdateView,
+    PostDeleteView,
+    PostLikeView,
+    PostPinView,
+)
+
+urlpatterns = [
+    path("categories/", ForumCategoryListView.as_view(), name="forum-categories"),
+    path("threads/", ThreadListView.as_view(), name="thread-list"),
+    path("threads/create/", ThreadCreateView.as_view(), name="thread-create"),
+    path("threads/<slug:slug>/", ThreadDetailView.as_view(), name="thread-detail"),
+    path(
+        "threads/<slug:slug>/update/", ThreadUpdateView.as_view(), name="thread-update"
+    ),
+    path(
+        "threads/<slug:slug>/delete/", ThreadDeleteView.as_view(), name="thread-delete"
+    ),
+    path("threads/<slug:slug>/pin/", ThreadPinView.as_view(), name="thread-pin"),
+    path("threads/<slug:slug>/close/", ThreadCloseView.as_view(), name="thread-close"),
+    path(
+        "threads/<slug:thread_slug>/posts/create/",
+        PostCreateView.as_view(),
+        name="post-create",
+    ),
+    path("posts/<int:id>/update/", PostUpdateView.as_view(), name="post-update"),
+    path("posts/<int:id>/delete/", PostDeleteView.as_view(), name="post-delete"),
+    path("posts/<int:post_id>/like/", PostLikeView.as_view(), name="post-like"),
+    path("posts/<int:post_id>/pin/", PostPinView.as_view(), name="post-pin"),
+]
