@@ -1,0 +1,23 @@
+# Dipendenze di runtime. Installazione:
+#   pip install -r requirements/base.txt
+
+Django==6.0.5
+djangorestframework==3.17.1
+djangorestframework-simplejwt==5.5.1
+django-allauth==65.18.0
+dj-rest-auth==7.2.0
+django-cors-headers==4.6.0
+drf-yasg==1.21.15
+
+Pillow==11.2.1
+python-decouple==3.8
+requests==2.32.3
+cryptography==44.0.3
+
+# psycopg3. Sostituisce psycopg2-binary, che non ha wheel per Python >= 3.13 e
+# fallisce la build richiedendo pg_config. Django supporta psycopg3 dalla 4.2
+# senza modifiche al codice.
+psycopg[binary]==3.2.3
+
+# Server WSGI per la produzione (in sviluppo si usa runserver).
+gunicorn==23.0.0

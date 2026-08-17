@@ -1,0 +1,67 @@
+@import 'tailwindcss';
+
+/* Tailwind 4: il tema si dichiara qui, non in tailwind.config.js.
+   Ogni token diventa una utility (bg-brand-600, text-ink-500, ...). */
+@theme {
+  --color-brand-50: oklch(0.97 0.02 195);
+  --color-brand-100: oklch(0.93 0.045 195);
+  --color-brand-200: oklch(0.87 0.075 194);
+  --color-brand-500: oklch(0.66 0.12 193);
+  --color-brand-600: oklch(0.58 0.115 194);
+  --color-brand-700: oklch(0.48 0.098 195);
+  --color-brand-900: oklch(0.31 0.062 196);
+
+  --color-ink-400: oklch(0.62 0.012 250);
+  --color-ink-500: oklch(0.52 0.014 250);
+  --color-ink-700: oklch(0.36 0.017 253);
+  --color-ink-900: oklch(0.22 0.019 256);
+
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Il focus visibile non è decorativo: senza, il sito è inutilizzabile da
+   tastiera. Applicato globalmente così nessun componente può dimenticarlo. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+  }
+
+  body {
+    @apply bg-slate-50 text-ink-900 font-sans antialiased;
+  }
+}
+
+/* Corpo degli articoli: arriva dal backend come testo e non ha classi
+   Tailwind, quindi gli stili vanno applicati per tag. */
+@layer components {
+  .article-body {
+    @apply text-ink-700 leading-relaxed;
+  }
+  .article-body > * + * {
+    @apply mt-4;
+  }
+  .article-body h2 {
+    @apply text-2xl font-semibold text-ink-900 mt-8;
+  }
+  .article-body h3 {
+    @apply text-xl font-semibold text-ink-900 mt-6;
+  }
+  .article-body a {
+    @apply text-brand-700 underline underline-offset-2;
+  }
+  .article-body ul {
+    @apply list-disc pl-6;
+  }
+  .article-body ol {
+    @apply list-decimal pl-6;
+  }
+  .article-body img {
+    @apply rounded-lg max-w-full h-auto;
+  }
+  .article-body blockquote {
+    @apply border-l-4 border-brand-200 pl-4 italic;
+  }
+}

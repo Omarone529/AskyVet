@@ -1,6 +1,7 @@
 # Environment
 .env
 .env.*
+!.env.example
 
 # Python
 __pycache__/
@@ -14,11 +15,22 @@ env/
 *.log
 local_settings.py
 db.sqlite3
-media/
-staticfiles/
+backend/media/
+backend/staticfiles/
 
-# Docker
-*.env
+# Node / React
+node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test & coverage
+.coverage
+htmlcov/
+.pytest_cache/
 
 # IDE
 .vscode/
@@ -29,6 +41,3 @@ staticfiles/
 # OS
 .DS_Store
 Thumbs.db
-
-# Migrations (opzionale, molti preferiscono committarle)
-# */migrations/

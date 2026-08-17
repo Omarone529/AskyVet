@@ -1,0 +1,7 @@
+# Dipendenze di sviluppo. Installazione:
+#   pip install -r requirements/dev.txt
+
+-r base.txt
+
+pre-commit==4.2.0
+ruff==0.11.12
