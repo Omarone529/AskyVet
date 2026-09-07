@@ -180,6 +180,24 @@ export function Spinner({ className }: { className?: string }) {
   )
 }
 
+/**
+ * Sagoma grigia che pulsa al posto del contenuto non ancora arrivato.
+ *
+ * Neutra di proposito: nessun testo, nessuna animazione a tema, niente che
+ * spieghi cosa sta succedendo dietro. È lo stesso pattern che usano tutti i
+ * siti moderni anche con il backend ben sveglio, quindi comunica "sto
+ * caricando" e nient'altro — in particolare non lascia intuire che c'è un
+ * servizio che si stava risvegliando.
+ */
+export function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cx('animate-pulse rounded bg-slate-200', className)}
+      aria-hidden="true"
+    />
+  )
+}
+
 export function Loading({ label = 'Caricamento…' }: { label?: string }) {
   return (
     <div
