@@ -9,6 +9,67 @@
       content="AskyVet — divulgazione veterinaria: articoli e forum di discussione."
     />
     <title>AskyVet</title>
+
+    <!-- Handshake TCP/TLS verso il backend aperto in anticipo: quando parte la
+         prima chiamata vera la connessione è già pronta. -->
+    <link rel="preconnect" href="%VITE_API_URL%" crossorigin />
+
+    <!--
+      Wake-on-entry.
+
+      Il backend Django sul piano gratuito si sospende dopo ~15 minuti di
+      inattività, e la prima richiesta che arriva dopo paga 30-60 secondi di
+      riavvio del container. Questo ping parte nell'istante in cui il browser
+      legge l'HTML — prima del bundle JavaScript, prima che React monti
+      qualsiasi cosa — così il risveglio è già in corso mentre l'utente sta
+      ancora leggendo l'intestazione. Quando la pagina chiede gli articoli il
+      backend è sveglio, o quasi.
+
+      Volutamente invisibile: niente messaggi, niente stati dedicati. L'utente
+      non deve accorgersi che c'è un server che dormiva.
+    -->
+    <script>
+      ;(function () {
+        var api = '%VITE_API_URL%'
+
+        // Senza VITE_API_URL il segnaposto resta letterale: niente ping.
+        if (!/^https?:\/\//.test(api)) return
+
+        var url = api.replace(/\/+$/, '') + '/healthz'
+        var last = 0
+
+        function wake() {
+          // Il servizio si addormenta dopo ~15 minuti: sotto i 10 è sveglio di
+          // sicuro e un altro ping sarebbero solo ore gratuite bruciate.
+          var now = Date.now()
+          if (last && now - last < 600000) return
+          last = now
+
+          try {
+            // no-cors: la risposta non ci serve, ci serve solo che la richiesta
+            // arrivi. Così il ping non dipende dalla configurazione CORS e non
+            // sporca la console se un giorno l'origine cambia.
+            fetch(url, {
+              mode: 'no-cors',
+              cache: 'no-store',
+              credentials: 'omit',
+            }).catch(function () {})
+          } catch (e) {
+            // Il ping è un effetto collaterale: se fallisce, le chiamate vere
+            // hanno comunque i loro tentativi di riserva.
+          }
+        }
+
+        wake()
+
+        // Scheda lasciata aperta in background e poi ripresa: nel frattempo il
+        // backend può essersi riaddormentato, lo svegliamo prima che l'utente
+        // clicchi qualcosa.
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'visible') wake()
+        })
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

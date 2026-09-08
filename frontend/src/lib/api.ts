@@ -2,6 +2,20 @@ import type { AuthTokens } from '@/types'
 
 const BASE_URL = import.meta.env['VITE_API_URL'] ?? 'http://localhost:8000'
 
+// Il backend gratuito si sospende dopo ~15 minuti e il risveglio richiede
+// 30-60 secondi. L'index.html lo sveglia già al caricamento della pagina
+// (wake-on-entry), ma se l'utente arriva a freddo la prima chiamata può
+// comunque cadere dentro il riavvio: la lasciamo aspettare a lungo e la
+// ritentiamo, invece di mostrargli un errore per una cosa temporanea.
+const REQUEST_TIMEOUT_MS = 20_000
+const RETRIES = 3
+const RETRY_DELAY_MS = 2_000
+
+/** Il container sta ancora salendo: la risposta arriva dal proxy, non da noi. */
+const WAKING_STATUSES = new Set([502, 503, 504])
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 const ACCESS_KEY = 'askyvet.access'
 const REFRESH_KEY = 'askyvet.refresh'
 
@@ -165,7 +179,40 @@ async function send(
       : options.body !== undefined
         ? JSON.stringify(options.body)
         : undefined,
+    // Il default del browser è di alcuni minuti: troppo per accorgersi che una
+    // richiesta è andata persa, e comunque troppo poco per non ritentare.
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   })
+}
+
+/**
+ * Come `send`, ma insiste finché il backend non risponde.
+ *
+ * Ritenta solo le GET: sono le uniche ripetibili senza rischi. Una POST andata
+ * persa dopo che il server l'ha già ricevuta creerebbe un doppione — meglio un
+ * errore che due commenti pubblicati.
+ */
+async function sendWithRetry(
+  path: string,
+  options: RequestOptions,
+  accessToken: string | null,
+): Promise<Response> {
+  const canRetry = (options.method ?? 'GET') === 'GET'
+
+  for (let attempt = 0; ; attempt++) {
+    const last = !canRetry || attempt === RETRIES
+
+    try {
+      const response = await send(path, options, accessToken)
+      if (last || !WAKING_STATUSES.has(response.status)) return response
+    } catch (error) {
+      // Timeout o rete: nessuna risposta è mai arrivata, quindi il server non
+      // ha eseguito nulla e riprovare è sicuro.
+      if (last) throw error
+    }
+
+    await sleep(RETRY_DELAY_MS)
+  }
 }
 
 /**
@@ -178,7 +225,7 @@ export async function request<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  let response = await send(
+  let response = await sendWithRetry(
     path,
     options,
     options.skipAuth ? null : tokens.access(),
@@ -190,7 +237,7 @@ export async function request<T>(
         refreshInFlight = null
       })
       const fresh = await refreshInFlight
-      response = await send(path, options, fresh)
+      response = await sendWithRetry(path, options, fresh)
     } catch (error) {
       tokens.clear()
       onSessionExpired()

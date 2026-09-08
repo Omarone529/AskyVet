@@ -10,6 +10,7 @@ import {
   Loading,
   Pagination,
   Select,
+  Skeleton,
 } from '@/components/ui'
 import { api, mediaUrl } from '@/lib/api'
 import { formatDate } from '@/lib/format'
@@ -52,6 +53,49 @@ function ArticleCard({ article }: { article: ArticleListItem }) {
         </div>
       </Link>
     </Card>
+  )
+}
+
+/**
+ * La sagoma di ArticleCard: stesse proporzioni, così quando arrivano i dati la
+ * pagina non sobbalza.
+ */
+function ArticleCardSkeleton() {
+  return (
+    <Card className="overflow-hidden">
+      <Skeleton className="h-44 w-full rounded-none" />
+
+      <div className="p-5">
+        <Skeleton className="h-5 w-16 rounded-full" />
+        <Skeleton className="mt-2 h-5 w-full" />
+        <Skeleton className="mt-1.5 h-5 w-2/3" />
+        <Skeleton className="mt-4 h-3 w-40" />
+      </div>
+    </Card>
+  )
+}
+
+/**
+ * Occupa la griglia mentre gli articoli arrivano.
+ *
+ * Sei sagome: riempiono le tre colonne del desktop senza promettere quanti
+ * articoli ci saranno davvero.
+ */
+function ArticlesSkeleton() {
+  return (
+    <div
+      className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      role="status"
+      aria-busy="true"
+    >
+      {/* Muto per gli occhi, non per gli screen reader: la sagoma da sola non
+          direbbe nulla a chi non la vede. */}
+      <span className="sr-only">Caricamento degli articoli…</span>
+
+      {Array.from({ length: 6 }, (_, i) => (
+        <ArticleCardSkeleton key={i} />
+      ))}
+    </div>
   )
 }
 
@@ -128,7 +172,11 @@ export function Articles() {
         </Select>
       </div>
 
-      {articles.loading && <Loading />}
+      {/* Prima apertura (è qui che si paga l'eventuale risveglio del backend):
+          la griglia di sagome. Sui ricaricamenti successivi i risultati
+          precedenti restano a schermo, quindi basta lo spinner. */}
+      {articles.loading && !articles.data && <ArticlesSkeleton />}
+      {articles.loading && articles.data && <Loading />}
       {articles.error && <Alert>{articles.error}</Alert>}
 
       {articles.data && articles.data.results.length === 0 && (

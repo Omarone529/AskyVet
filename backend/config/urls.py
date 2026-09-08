@@ -8,6 +8,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
+from common.views import healthz
 from users.views import GoogleLoginView, LoginView
 
 schema_view = get_schema_view(
@@ -21,6 +22,10 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    # No trailing slash: APPEND_SLASH would answer the wake-up ping with a
+    # redirect, and the ping is fired often enough that the extra round trip
+    # is worth avoiding. Doubles as the health check path for the host.
+    path("healthz", healthz, name="healthz"),
     path("admin/", admin.site.urls),
     path(
         "api/swagger/",
